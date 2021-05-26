@@ -21,12 +21,12 @@ from backend import views
 from knox import views as knox_views
 
 router = routers.DefaultRouter()
-router.register(r'entries', views.EntryView)
+router.register(r'entries', views.EntryView, basename='Entry')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    path('api/register', views.RegisterView.as_view()),
+    path('api/register/', views.RegisterView.as_view()),
     url('api/login/', views.LoginView.as_view()),
     url('api/logout/', knox_views.LogoutView.as_view()),
     url('api/logoutall/', knox_views.LogoutAllView.as_view()),

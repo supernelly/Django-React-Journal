@@ -1,18 +1,19 @@
 import React, { Component } from "react";
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import Modal from '../Journal/modal';
 import axios from "axios";
 
+
 class Journal extends Component {
+
   constructor(props) {
     super(props);
     this.state = {
-      viewCompleted: false,
       entryList: [],
       modal: false,
       activeItem: {
         title: "",
         body: "",
+        username: sessionStorage.getItem('username'),
       },
     };
   }
@@ -22,8 +23,14 @@ class Journal extends Component {
   }
 
   refreshList = () => {
+    var token = sessionStorage.getItem('token');
     axios
-      .get(`/api/entries/`)
+      .get(`https://afternoon-hamlet-77607.herokuapp.com/api/entries/`, {
+        headers: {
+          Authorization: 'Token ' + token,
+          Username: sessionStorage.getItem('username')
+        }
+       })
       .then((res) => this.setState({ entryList: res.data }))
       .catch((err) => console.log(err));
   };
@@ -34,26 +41,30 @@ class Journal extends Component {
 
   handleSubmit = (item) => {
     this.toggle();
+    var token = sessionStorage.getItem('token');
     // Create and update, depending on if id exists or not
-    if (item.id) {
-      axios
-      .put(`/api/entries/${item.id}/`, item)
-      .then((res) => this.refreshList());
-    return;
-    }
     axios
-      .post("/api/entries/", item)
+      .post("https://afternoon-hamlet-77607.herokuapp.com/api/entries/", item, {
+        headers: {
+          Authorization: 'Token ' + token
+        }
+       })
       .then((res) => this.refreshList());
   };
 
   handleDelete = (item) => {
+    var token = sessionStorage.getItem('token');
       axios
-      .delete(`/api/entries/${item.id}/`)
+      .delete(`https://afternoon-hamlet-77607.herokuapp.com/api/entries/${item.id}/`, {
+        headers: {
+          Authorization: 'Token ' + token
+        }
+       })
       .then((res) => this.refreshList());
   };
 
   createItem = () => {
-    const item = { title: "", body: "" };
+    const item = { title: "", body: "" , username: sessionStorage.getItem('username')};
 
     this.setState({ activeItem: item, modal: !this.state.modal });
   };
@@ -63,19 +74,18 @@ class Journal extends Component {
   };
 
   renderItems = () => {
-    const { viewCompleted } = this.state;
     const newItems = this.state.entryList;
 
     return newItems.map((item) => (
       <li
         key={item.id}
-        className="list-group-item d-flex justify-content-between align-items-center"
+        className="list-group-item d-flex justify-content-between flex-column"
       >
-        <span
-          className={`journal-title mr-2`}
-          title={item.body}
-        >
+        <span className={`mr-2 font-weight-bold`}>
           {item.title}
+        </span>
+        <span className={`mr-2 mb-2`}>
+          {item.body}
         </span>
         <span>
           <button
@@ -93,6 +103,12 @@ class Journal extends Component {
         </span>
       </li>
     ));
+  };
+
+  logOut = () => {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('username');
+    window.location.href = '/';
   };
 
   render() {
@@ -115,6 +131,14 @@ class Journal extends Component {
               </ul>
             </div>
           </div>
+        </div>
+        <div className="text-center my-4">
+          <button
+            className="btn btn-primary"
+            onClick={this.logOut}
+          >
+            Log out
+          </button>
         </div>
         {this.state.modal ? (
           <Modal
